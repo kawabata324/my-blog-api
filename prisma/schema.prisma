@@ -1,0 +1,58 @@
+generator client {
+  provider = "prisma-kysely"
+  output   = "../src/db"
+  fileName = "types.ts"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DB_URL")
+}
+
+model Administrators {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name           String   @unique @db.VarChar(255)
+  passwordDigest String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@map("administrators")
+}
+
+model Article {
+  id           String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title        String       @db.VarChar(255)
+  htmlBody     String       @db.Text
+  markdownBody String       @db.Text
+  publishedAt  DateTime?    @default(now())
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  ArticleTag   ArticleTag[]
+
+  @@map("articles")
+}
+
+model Tag {
+  id          String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code        String       @unique @db.VarChar(255)
+  displayName String       @db.VarChar(255)
+  colorCode   String       @db.VarChar(9)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  ArticleTag  ArticleTag[]
+
+  @@map("tags")
+}
+
+model ArticleTag {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  articleId String   @db.Uuid
+  article   Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  tagId     String   @db.Uuid
+  tag       Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([articleId, tagId])
+  @@map("articleTags")
+}
